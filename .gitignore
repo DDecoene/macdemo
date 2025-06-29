@@ -1,0 +1,32 @@
+# General IDE/Editor files
+.vscode/
+*.DS_Store
+
+# macOS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# Compiler artifacts
+*.o
+*.d
+*.dylib
+*.so
+
+# Metal compiler artifacts
+shaders.air
+default.metallib
+
+# Executables
+mydemo
+
+# Build directories (if you were to create any)
+# build/
+# out/
+
+# Temporary files
+*.tmp
+*~
