@@ -26,9 +26,11 @@ typedef enum {
 } SceneType;
 
 // Structure to hold uniform data passed to the GPU shaders.
+// MODIFIED: Added resolution to the uniforms struct.
 typedef struct {
     float time;
-    SceneType currentScene; // Add scene type to uniforms
+    SceneType currentScene;
+    float resolution[2]; // Add screen resolution (width, height)
 } Uniforms;
 
 struct timespec startTime;
@@ -127,13 +129,16 @@ void frame_callback(void* layer) {
         printf("Transitioning to Scene 3: Circle Moire\n");
     }
 
-    // Prepare uniform data
-    Uniforms uniforms;
-    uniforms.time = elapsedTime;
-    uniforms.currentScene = currentScene; // Pass current scene to shader
-
     id<CAMetalDrawable> drawable = [metalLayer nextDrawable];
     if (!drawable) return;
+
+    // MODIFIED: Prepare uniform data, including resolution
+    Uniforms uniforms;
+    uniforms.time = elapsedTime;
+    uniforms.currentScene = currentScene;
+    CGSize drawableSize = metalLayer.drawableSize;
+    uniforms.resolution[0] = (float)drawableSize.width;
+    uniforms.resolution[1] = (float)drawableSize.height;
 
     MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
     renderPassDescriptor.colorAttachments[0].texture = drawable.texture;
@@ -144,8 +149,8 @@ void frame_callback(void* layer) {
     id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
     
     [renderEncoder setRenderPipelineState:pipelineState];
+    // Note: We are using a single struct for both vertex and fragment uniforms at buffer index 0
     [renderEncoder setVertexBytes:&uniforms length:sizeof(uniforms) atIndex:0];
-    // Fragment shader also needs uniforms to know about the scene
     [renderEncoder setFragmentBytes:&uniforms length:sizeof(uniforms) atIndex:0];
     [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
     

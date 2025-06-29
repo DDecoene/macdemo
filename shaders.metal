@@ -6,9 +6,11 @@
 using namespace metal;
 
 // Uniforms struct to pass data from CPU to GPU
+// MODIFIED: Added resolution to match the C struct
 struct Uniforms {
     float time;
-    int currentScene; // Use int for scene ID
+    int currentScene;
+    float2 resolution;
 };
 
 // Vertex shader: Positions the geometry.
@@ -25,12 +27,12 @@ vertex float4 vertex_main(uint vid [[vertex_id]]) {
 fragment half4 fragment_main(float4 pos [[position]],
                              constant Uniforms &uniforms [[buffer(0)]]) {
     
-    // Only execute this shader logic if it's the plasma scene
     if (uniforms.currentScene != 0) {
-        return half4(0.0, 0.0, 0.0, 1.0); // Return black if not plasma scene
+        return half4(0.0, 0.0, 0.0, 1.0);
     }
 
-    float2 uv = pos.xy / float2(800.0, 600.0);
+    // MODIFIED: Use resolution from uniforms
+    float2 uv = pos.xy / uniforms.resolution;
     float time = uniforms.time;
 
     // --- Plasma Layer 1 ---
@@ -57,60 +59,50 @@ fragment half4 fragment_main(float4 pos [[position]],
 
 
 // Fragment shader for Scene 2: Scrolling Colors
-// We'll use a simple gradient that scrolls.
 fragment half4 fragment_scene2(float4 pos [[position]],
                                 constant Uniforms &uniforms [[buffer(0)]]) {
     
-    // Only execute this shader logic if it's the scrolling colors scene
     if (uniforms.currentScene != 1) {
-        return half4(0.0, 0.0, 0.0, 1.0); // Return black if not scene 2
+        return half4(0.0, 0.0, 0.0, 1.0);
     }
 
-    float2 uv = pos.xy / float2(800.0, 600.0);
+    // MODIFIED: Use resolution from uniforms
+    float2 uv = pos.xy / uniforms.resolution;
     float time = uniforms.time;
 
-    // Simple color based on UV coordinates and time for scrolling effect
-    // Colors will shift horizontally and vertically based on time
-    half r = half(sin(uv.x * 5.0 + time * 0.5) * 0.5 + 0.5); // Red band scrolling horizontally
-    half g = half(sin(uv.y * 7.0 + time * 0.3) * 0.5 + 0.5); // Green band scrolling vertically
-    half b = half(cos((uv.x + uv.y) * 3.0 + time * 0.7) * 0.5 + 0.5); // Blue band with diagonal movement
+    half r = half(sin(uv.x * 5.0 + time * 0.5) * 0.5 + 0.5);
+    half g = half(sin(uv.y * 7.0 + time * 0.3) * 0.5 + 0.5);
+    half b = half(cos((uv.x + uv.y) * 3.0 + time * 0.7) * 0.5 + 0.5);
 
     return half4(r, g, b, 1.0);
 }
 
-// --- NEW SCENE ---
 // Fragment shader for Scene 3: Circle Moire Effect
 fragment half4 fragment_scene3_moire(float4 pos [[position]],
                                       constant Uniforms &uniforms [[buffer(0)]]) {
-    // Only execute this shader logic if it's the moire scene
     if (uniforms.currentScene != 2) {
         return half4(0.0, 0.0, 0.0, 1.0);
     }
     
     float time = uniforms.time;
-    float2 resolution = float2(800.0, 600.0);
     
-    // Create aspect-corrected, centered coordinates from -1 to 1 on the shortest axis
-    float2 p = (2.0 * pos.xy - resolution) / resolution.y;
+    // MODIFIED: Use resolution from uniforms for aspect-correct coordinates
+    float2 p = (2.0 * pos.xy - uniforms.resolution) / uniforms.resolution.y;
     
     // --- Pattern 1 ---
-    // Center moves in a circle
     float2 center1 = float2(sin(time * 0.4), cos(time * 0.4));
     float dist1 = length(p - center1);
-    float rings1 = sin(dist1 * 25.0 - time * 6.0); // 25.0 = frequency, 6.0 = speed of rings expanding
+    float rings1 = sin(dist1 * 25.0 - time * 6.0);
     
     // --- Pattern 2 ---
-    // Center moves in a different, larger circle
     float2 center2 = float2(sin(time * -0.6) * 1.2, cos(time * 0.5) * 1.2);
     float dist2 = length(p - center2);
     float rings2 = sin(dist2 * 20.0 - time * 8.0);
     
     // --- Combine Patterns ---
-    // Adding the two sine waves together creates the interference pattern
     float combined = rings1 + rings2;
     
     // --- Colorization ---
-    // Use the combined pattern to drive some psychedelic colors
     half r = half(0.5 + 0.5 * sin(combined * 3.14159));
     half g = half(0.5 + 0.5 * cos(combined * 3.14159 + time));
     half b = half(0.5 + 0.5 * sin(combined * 3.14159 * 0.8 - time));

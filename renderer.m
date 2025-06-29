@@ -1,3 +1,7 @@
+// [
+//  project_bundle_2025-06-29_21-26-54-722.txt:
+//  renderer.m
+// ]
 #import <Cocoa/Cocoa.h> // For NSApplication, NSWindow, NSMenu, etc.
 #import <Metal/Metal.h> // For MTLDevice, MTLCommandQueue, etc.
 #import <MetalKit/MetalKit.h> // For MTKView and MTKViewDelegate
@@ -51,11 +55,12 @@ void start_app(void) {
     [appMenuItem setSubmenu:appMenu];
 
     // Define the window's initial frame (position and size).
-    NSRect frame = NSMakeRect(0, 0, 800, 600); // Centered at (0,0) initial, then moved by center.
+    NSRect frame = NSMakeRect(0, 0, 800, 600); // Window will start at this size before going fullscreen.
     
     // Create the main application window.
+    // MODIFIED: Added NSWindowStyleMaskResizable to allow fullscreen behavior.
     NSWindow *window = [[NSWindow alloc] initWithContentRect:frame
-                                                   styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable // Window has title bar and close button.
+                                                   styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskResizable
                                                      backing:NSBackingStoreBuffered // Use buffering for drawing.
                                                        defer:NO]; // Create the window immediately.
     // Center the window on the screen.
@@ -65,6 +70,9 @@ void start_app(void) {
     // Make the window visible and bring it to the front.
     [window makeKeyAndOrderFront:nil];
     
+    // ADDED: Programmatically enter fullscreen mode.
+    [window toggleFullScreen:nil];
+
     // Create a Metal device (represents the GPU).
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (!device) {
